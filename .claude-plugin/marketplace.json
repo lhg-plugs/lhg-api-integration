@@ -1,0 +1,1 @@
+{"$schema":"https://json.schemastore.org/claude-code-marketplace.json","name":"lhg-plugs","owner":{"name":"刘洪光"},"plugins":[{"description":"API 对接专家：文档→鉴权识别→调用封装→重试限流→联调自检一条龙","name":"lhg-api-integration","source":"./"}]}
