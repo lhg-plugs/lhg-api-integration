@@ -1,95 +1,113 @@
 <!-- About 简介（推送后填写到仓库 About 栏）：
-API 对接专家：文档→鉴权→封装→重试限流→联调自检一条龙 ｜ 一键安装：/plugin marketplace add lhg-plugs/lhg-api-integration
+API 对接专家：文档→鉴权识别→调用封装→重试限流策略→联调自检，18 条确定性规则守住密钥与健壮性。 ｜ 一键安装：/plugin marketplace add lhg-plugs/lhg-api-integration
 -->
-<!-- topics（推送后打）：claude-code, claude-plugin, agent-skills, api, rest, integration -->
+<!-- topics（推送后打）：claude-code, claude-plugin, agent-skills, api, rest, integration, auth, oauth2 -->
 
-# lhg-api-integration：API 对接专家
+<p align="center">
+  <img src="./assets/readme/hero.svg" width="100%" alt="lhg-api-integration — API 对接专家">
+</p>
 
-> **一句话介绍**：给 AI 编程助手装上"API 对接一条龙"——文档→鉴权识别（说人话讲清 OAuth2）→调用封装代码生成→重试/限流/熔断策略→18 条确定性规则联调自检，小白也能稳稳对接第三方 API。
->
-> **一键安装**：在 Claude Code 里运行
-> ```
-> /plugin marketplace add lhg-plugs/lhg-api-integration
-> /plugin install lhg-api-integration@lhg-plugs
-> ```
+> **一句话介绍**：API 对接专家：文档→鉴权识别→调用封装→重试限流策略→联调自检，18 条确定性规则守住密钥与健壮性。
+
+**一键安装**：在 Claude Code 里运行
+
+```bash
+/plugin marketplace add lhg-plugs/lhg-api-integration
+/plugin install lhg-api-integration@lhg-plugs
+```
+
+## 它能帮你做出什么
+
+每条产出先过确定性脚本自查，再交人工复核清单——数字全部数自仓库里的审计脚本，不靠模型"自觉"。
+
+| 自查脚本 | 规则数 | blocker | warning | nit | 覆盖 |
+|---|---|---|---|---|---|
+| `scripts/audit/api_audit.py` | 18 | 6 | 10 | 2 | 安全、健壮性、限流、分页、错误处理、可维护性 |
+| **合计** | **18** | **6** | **10** | **2** | |
+
+- **零 LLM 成本**：规则是纯 Python 脚本，零第三方依赖，本地运行。
+- **坏 / 好对照可验**：`fixtures/` 里备有坏/好用例，冒烟测试断言命中情况。
+- **冒烟全绿**：`python3 smoke_test.py` 45 项全部通过（JSON 合法、frontmatter 完整、命令/skill/agent 齐全）。
 
 ## 它是什么
 
 `lhg-api-integration` 是一个 Claude Code 插件（plugin 为主、skill 为辅）：
 
-- **4 个命令**（小白入口）：`api-dock` 对接一条龙，`auth` 鉴权小课堂（先讲明白再动手），`check` 对接代码体检，`rateplan` 限流与重试策略设计
-- **4 个平台中立 skill**（方法论，可移植到豆包/Workbuddy 等 agent 平台）：鉴权全解、调用封装代码生成、重试/超时/限流/熔断、自检与联调上线
-- **2 个专家 agent**：对接构建、独立评审
-- **2 个硬门 hooks**：commit 前审计拦截、无超时/硬编码密钥的代码提醒（均可一键豁免）
-- **18 条确定性对接审计规则**：纯 Python、零第三方依赖，5 秒出结果
+- **4 个命令**（小白入口）：`api-dock` API 文档→鉴权识别→调用封装→重试限、`auth` 鉴权小课堂、`check` 对接代码体检、`rateplan` 限流与重试策略设计
+- **4 个平台中立 skill**（方法论，可移植到豆包/Workbuddy 等 agent 平台）：lhg-api-auth, lhg-api-codegen, lhg-api-retry, lhg-api-ship
+- **2 个专家 agent**：dock-builder, dock-reviewer
+- **2 个 hooks**（`hooks/`：post_write_remind.py, pre_commit_dock.py），关键操作前自动把关
+- **18 条确定性自查规则**：纯 Python 脚本，见上表
 
-## 4 个命令用法
+## 为什么是它
+
+不是一个 prompt，而是一套互相兜底的机制：
+
+1. **确定性脚本（机器）+ 人工复核清单（人）**：先跑 `scripts/` 下的审计脚本（共 18 条规则），发现分三级：**blocker**（必须修）、**warning**（修或写豁免理由）、**nit**（顺手修）；再按对应 skill 的复核清单过一遍脚本抓不到的（内容真实性、越权、口径一致）。blocker 清零才算做完；为清零改规则算作弊，不许。
+2. **硬门，不是提醒**：hooks 在关键操作前自动拦截或警告（见 `hooks/`），而不是只在文档里写一句"请注意"。
+3. **方法论沉淀在 skill 里**：流程、检查清单、口径都写在 `skills/` 的方法论里，命令只是入口；换个 agent 平台也能复用同一套做法。
+4. **可验，不是可信**：`fixtures/` 备有坏/好对照用例，`smoke_test.py` 一键验证，规则有没有生效、自己跑一遍就知道。
+
+## 快速上手
+
+```bash
+# 1. 安装（Claude Code 里运行）
+/plugin marketplace add lhg-plugs/lhg-api-integration
+/plugin install lhg-api-integration@lhg-plugs
+
+# 2. API 文档→鉴权识别→调用封装→重试限流→联调清单，对接第三方 API 一条龙
+/lhg-api-integration:api-dock "https://docs.example.com"
+```
 
 | 命令 | 作用 | 示例 |
 |---|---|---|
-| `/lhg-api-integration:api-dock` | API 文档→鉴权识别→封装代码→重试策略→联调清单，一条龙 | `/lhg-api-integration:api-dock "https://docs.example.com"` |
-| `/lhg-api-integration:auth` | 鉴权小课堂：说人话讲清 API Key / Bearer / OAuth2 该用哪个 | `/lhg-api-integration:auth "Stripe"` |
-| `/lhg-api-integration:check` | 对接代码体检（脚本 + 人工评审清单） | `/lhg-api-integration:check ./my-client` |
-| `/lhg-api-integration:rateplan` | 按 API 限流档位定制退避、熔断与降级方案 | `/lhg-api-integration:rateplan "OpenAI" --qps 5` |
-
-## 自查说明
-
-自查 = 确定性脚本（机器）+ 人工评审清单（人）：
-
-1. 先跑 `scripts/audit/api_audit.py`（18 条规则：密钥硬编码、无超时、无重试、无限重试、429 未处理、分页缺失、空异常吞没等），零 LLM 成本；
-2. 发现分三级：**blocker**（必须修，commit 前 hook 会拦截）、**warning**（修或写豁免理由）、**nit**（顺手修）；
-3. 再按 `lhg-api-ship` skill 的联调六步过一遍脚本抓不到的（凭证真值残留、不该重试的是否重试、分页终止条件）。
-
-blocker 清零才算对接完；为清零改规则算作弊，不许。
-
-## 目录结构
-
-```
-lhg-api-integration/
-├── .claude-plugin/          # plugin.json（插件清单）+ marketplace.json（本仓即市场）
-├── commands/                # 4 个命令：api-dock / auth / check / rateplan
-├── skills/                  # 4 个平台中立 skill（lhg-api-auth/codegen/retry/ship）
-├── agents/                  # 2 个专家 agent（dock-builder / dock-reviewer）
-├── hooks/                   # 2 个硬门（commit 前审计拦截 / 无超时提醒）+ 豁免说明
-├── scripts/audit/           # 18 条确定性对接审计规则（零第三方依赖）
-├── fixtures/                # 冒烟测试用例（坏/好对照）
-├── smoke_test.py            # 一键冒烟测试
-├── ATTRIBUTION.md           # 灵感来源与许可声明
-└── LICENSE                  # MIT
-```
+| `/lhg-api-integration:api-dock` | API 文档→鉴权识别→调用封装→重试限流→联调清单，对接第三方 API 一条龙。 | `/lhg-api-integration:api-dock "https://docs.example.com"` |
+| `/lhg-api-integration:auth` | 鉴权小课堂：用说人话的方式讲清 API Key / Bearer / OAuth2 / Basic 该用哪个、怎么配。 | `/lhg-api-integration:auth "Stripe"` |
+| `/lhg-api-integration:check` | 对接代码体检：18 条确定性规则扫密钥硬编码、无超时、无重试、分页缺失等问题。 | `/lhg-api-integration:check ./my-client` |
+| `/lhg-api-integration:rateplan` | 限流与重试策略设计：按 API 的限流档位定制退避、熔断与降级方案。 | `/lhg-api-integration:rateplan "OpenAI" --qps 5` |
 
 ## 什么时候用 / 什么时候不用（FAQ）
 
 **什么时候用：**
 
-- 你要对接第三方 API（支付、短信、地图、AI 模型……），但没对接过、怕踩坑时 → 用 `/lhg-api-integration:api-dock`
-- 文档里的 OAuth2 把你绕晕了 → 先跑 `/lhg-api-integration:auth`，讲明白再动手
-- 已经写了一堆 `requests.get`，想收敛成规范的客户端类时 → 对接构建专家帮你重构
-- 对接代码要上线，怕有密钥泄露、无超时、无重试这类硬伤时 → 跑 `/lhg-api-integration:check`
-- 批量调用被限流 429 封过 key → 用 `/lhg-api-integration:rateplan` 定策略
+- 你需要API 文档→鉴权识别→调用封装→重试限流→联调时 → 用 `/lhg-api-integration:api-dock`
+- 你需要鉴权小课堂时 → 用 `/lhg-api-integration:auth`
+- 你需要对接代码体检时 → 用 `/lhg-api-integration:check`
 
 **什么时候不用：**
 
-- 你对接的是自家内部 API、鉴权就是内网直连 → 鉴权小课堂和密钥规则对你多余
-- 你只需要调一两个接口做一次性脚本 → 全套封装是杀鸡用牛刀，直接写裸调用即可
-- 你的语言不是 Python/JS（如 Go/Java）→ skill 方法论通用，但代码模板和审计脚本需要自己改
+- 你只需要其中一个零散能力时 → 本插件是成套流程，单点需求用更轻量的 skill 更合适
+- 你希望 AI 完全自由发挥、不接受任何自查与硬门时 → 它的规则审计与 hooks 会介入（可关，但那就别装它）
+- 你的场景不在上面命令表覆盖范围内时 → 先看命令表，没有对应命令就别硬套
 
-## lhg-plugs 插件矩阵
+## 目录结构
 
-| 插件 | 一句话 | 安装 |
-|---|---|---|
-| [lhg-api-integration](https://github.com/lhg-plugs/lhg-api-integration) | API 对接专家：文档→鉴权→封装→重试限流→联调自检一条龙 | `/plugin install lhg-api-integration@lhg-plugs` |
-| *（后续插件在此追加，保持表格格式一致）* | | |
+```
+lhg-api-integration/
+├── smoke_test.py          # 一键冒烟测试
+├── ATTRIBUTION.md         # 灵感来源与许可声明
+├── LICENSE                # MIT
+├── README.md              # 本文件
+├── .claude-plugin/
+├── agents/
+├── commands/
+├── fixtures/
+├── hooks/
+├── scripts/
+├── skills/
+```
 
 ## 自检与反馈
 
-- 每次用完任一 skill，按其「自检与反馈」节做轻量自检。
-- 标准冒烟用例：`python3 smoke_test.py`（仓库根目录），全绿才算过。
-- 反馈渠道：以 `[QC] <一句话问题>` 为标题提交到 https://github.com/lhg-plugs/lhg-api-integration/issues，正文写清「输入 → 错误输出 → 期望输出」。规则误报/漏报请附最小复现代码。
+本插件自带质检：每次使用后可跑 `python3 smoke_test.py` 一键验证（本次实测 45 项全部通过）。
 
-## 出品
+发现 bug 或有改进建议，以 `[QC] <一句话问题>` 为标题提交到 https://github.com/lhg-plugs/lhg-api-integration/issues，正文写清"复现步骤 → 实际表现 → 期望表现"。
 
-**出品：刘洪光**（安徽合肥），归属 [lhg-skills](https://github.com/lhg-skills)。
+同门插件见 [lhg-plugs](https://github.com/lhg-plugs)，86 个插件的完整矩阵在 [marketplace](https://github.com/lhg-plugs/marketplace) 维护。
+
+## 出品：刘洪光
+
+本插件由真人出镜 IP「刘洪光」（安徽合肥）出品，归属 [lhg-skills](https://github.com/lhg-skills)。
 
 - GitHub 主页：https://github.com/lhg-skills —— 全部 skill 开源在此，欢迎 star
 - 抖音：搜「刘老师讲AI实战」
